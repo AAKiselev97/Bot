@@ -14,6 +14,7 @@ import org.example.bot.provider.JSONProvider;
 import org.example.bot.provider.MessageProvider;
 import org.example.bot.provider.impl.JSONProviderImpl;
 import org.example.bot.provider.impl.MessageProviderImpl;
+import org.example.bot.util.TXTScanner;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.methods.ActionType;
@@ -41,8 +42,6 @@ public class TelegramBot extends TelegramLongPollingBot implements Bot {
     private static final Logger log = LogManager.getLogger(TelegramBot.class);
     private static final String TELEGRAM_USER_SIGN = "@";
     private static final String TELEGRAM_COMMAND_SIGN = "/";
-    private static final String HELLO_MESSAGE_FILENAME = "helloText.txt";
-    private static final String UNKNOWN_MESSAGE_FILENAME = "unknownText.txt";
     private static JSONProvider jsonProvider;
     private static MessageProvider messageProvider;
     private static MessageCounter messageCounter;
@@ -108,24 +107,21 @@ public class TelegramBot extends TelegramLongPollingBot implements Bot {
 
     public void formResponseByUnknownText(Update update) throws TelegramApiException {
         List<String> helloWordList = new ArrayList<>();
-        try (BufferedReader br = new BufferedReader(new InputStreamReader((Objects.requireNonNull(Thread.currentThread().getContextClassLoader().getResourceAsStream(HELLO_MESSAGE_FILENAME))), StandardCharsets.UTF_8))) {
-            br.lines().forEach(helloWordList::add);
+        try {
+            helloWordList = TXTScanner.getHelloMessageList();
         } catch (IOException e) {
             log.error(e);
             throw new RuntimeException(e);
         }
-        String[] words = update.getMessage().getText().split(" ");
-        for (String word : words) {
-            for (String helloWord : helloWordList) {
-                if (word.equalsIgnoreCase(helloWord)) {
-                    sendMessage(formHelloMessage(update), update.getMessage().getChatId());
-                    return;
-                }
+        for (String helloWord : helloWordList) {
+            if (update.getMessage().getText().toLowerCase().startsWith(helloWord)) {
+                sendMessage(formHelloMessage(update), update.getMessage().getChatId());
+                return;
             }
         }
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(Objects.requireNonNull(Thread.currentThread().getContextClassLoader().getResourceAsStream(UNKNOWN_MESSAGE_FILENAME)), StandardCharsets.UTF_8))) {
+        try {
             List<String> textList = new ArrayList<>();
-            br.lines().forEach(textList::add);
+            textList = TXTScanner.getUnknownMessageList();
             sendMessage(textList.get((int) (Math.random() * (textList.size() - 1))), update.getMessage().getChatId());
         } catch (IOException e) {
             log.error(e);
@@ -233,9 +229,8 @@ public class TelegramBot extends TelegramLongPollingBot implements Bot {
     }
 
     private String formHelloMessage(Update update) {
-        try (BufferedReader br = new BufferedReader(new InputStreamReader((Objects.requireNonNull(Thread.currentThread().getContextClassLoader().getResourceAsStream(HELLO_MESSAGE_FILENAME))), StandardCharsets.UTF_8))) {
-            List<String> textList = new ArrayList<>();
-            br.lines().forEach(textList::add);
+        try {
+            List<String> textList = TXTScanner.getHelloMessageList();
             String text = textList.get((int) (Math.random() * (textList.size())));
             if (Math.random() * 2 > 1) {
                 text = (TELEGRAM_USER_SIGN + update.getMessage().getFrom().getUserName() + " " + text);

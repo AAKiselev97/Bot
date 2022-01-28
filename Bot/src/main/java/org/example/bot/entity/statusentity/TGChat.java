@@ -1,11 +1,13 @@
 package org.example.bot.entity.statusentity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 
 import java.io.Serializable;
 import java.util.*;
 
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class TGChat implements Serializable {
     private Long chatId;
     private String chatName;

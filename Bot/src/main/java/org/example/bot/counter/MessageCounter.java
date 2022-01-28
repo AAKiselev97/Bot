@@ -7,6 +7,7 @@ import org.example.bot.config.JedisConfig;
 import org.example.bot.entity.statusentity.TGChat;
 import org.example.bot.entity.statusentity.TGUser;
 import org.example.bot.util.JSONConverter;
+import org.example.bot.util.TXTScanner;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.User;
 import redis.clients.jedis.Jedis;
@@ -28,6 +29,7 @@ public class MessageCounter implements Serializable {
     private static final String FILE_PATH = System.getProperty("user.home") + "/file/badWordsCounter.txt";
     private static final String TELEGRAM_USER_SIGN = "@";
     private static final int MINUTE_IN_HOUR = 60;
+    private static List<String> wordSeparatorArray;
     private static MessageCounter messageCounter;
     private List<String> badWords;
     private List<TGChat> tgChats;
@@ -54,7 +56,7 @@ public class MessageCounter implements Serializable {
                 }
             } catch (IOException | ClassNotFoundException e) {
                 tgChats = new ArrayList<>();
-                File file = new File("./Bot/file/badWordsCounter.txt");
+                File file = new File(FILE_PATH);
                 try {
                     file.createNewFile();
                 } catch (IOException ex) {
@@ -63,9 +65,8 @@ public class MessageCounter implements Serializable {
                 log.error(e);
             }
         }
-        try (BufferedReader br = new BufferedReader(new InputStreamReader((Objects.requireNonNull(Thread.currentThread().getContextClassLoader().getResourceAsStream("badWords.txt")))))) {
-            badWords = new ArrayList<>();
-            br.lines().forEach(badWords::add);
+        try {
+            badWords = TXTScanner.getBadWordsList();
         } catch (IOException e) {
             log.error(e);
             throw new RuntimeException(e);
@@ -150,9 +151,10 @@ public class MessageCounter implements Serializable {
     }
 
     public void scanString(Chat chat, User user, String string) {
-        string = changeEnglishLettersToRus(string).toLowerCase();
+        string = changeEnglishLettersToRusAndChangeAllWordSeparator(string).toLowerCase();
         String[] strings = string.split(" ");
         for (String word : strings) {
+            System.out.println(word);
             scanWord(chat, user, word);
         }
     }
@@ -180,12 +182,21 @@ public class MessageCounter implements Serializable {
         }
     }
 
-    private String changeEnglishLettersToRus(String string) {
+    private String changeEnglishLettersToRusAndChangeAllWordSeparator(String string) {
         String[] rusLetter = {"а", "в", "е", "к", "м", "р", "с", "т", "х",};
         String[] engLetter = {"a", "b", "e", "k", "m", "p", "c", "t", "x",};
         for (int i = 0; i < rusLetter.length; i++) {
             string = string.replace(engLetter[i], rusLetter[i]);
+        }System.out.println("1");
+        try {
+            wordSeparatorArray = TXTScanner.getWordSeparatorList();
+        } catch (IOException e) {
+            log.error(e);
         }
+        for (String separator: wordSeparatorArray){
+            string = string.replace(separator, " ");
+        }
+        System.out.println(string);
         return string;
     }
 

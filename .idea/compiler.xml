@@ -7,9 +7,11 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="BotAPI" />
+        <module name="Bot" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="Bot" target="11" />
       <module name="BotAPI" target="11" />
     </bytecodeTargetLevel>
   </component>

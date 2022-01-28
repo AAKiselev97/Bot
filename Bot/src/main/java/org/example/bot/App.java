@@ -3,6 +3,7 @@ package org.example.bot;
 import org.example.bot.bot.Bot;
 import org.example.bot.bot.impl.TelegramBot;
 import org.example.bot.config.JDBCConfig;
+import org.example.bot.config.JedisConfig;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.IOException;
@@ -16,6 +17,7 @@ public class App {
         App app = new App();
         Properties properties = app.getProperties();
         JDBCConfig.init(properties);
+        JedisConfig.init(properties);
         Bot bot = new TelegramBot(properties);
         bot.botConnect();
     }

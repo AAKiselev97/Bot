@@ -154,7 +154,6 @@ public class MessageCounter implements Serializable {
         string = changeEnglishLettersToRusAndChangeAllWordSeparator(string).toLowerCase();
         String[] strings = string.split(" ");
         for (String word : strings) {
-            System.out.println(word);
             scanWord(chat, user, word);
         }
     }
@@ -187,16 +186,15 @@ public class MessageCounter implements Serializable {
         String[] engLetter = {"a", "b", "e", "k", "m", "p", "c", "t", "x",};
         for (int i = 0; i < rusLetter.length; i++) {
             string = string.replace(engLetter[i], rusLetter[i]);
-        }System.out.println("1");
+        }
         try {
             wordSeparatorArray = TXTScanner.getWordSeparatorList();
         } catch (IOException e) {
             log.error(e);
         }
-        for (String separator: wordSeparatorArray){
+        for (String separator : wordSeparatorArray) {
             string = string.replace(separator, " ");
         }
-        System.out.println(string);
         return string;
     }
 

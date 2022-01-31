@@ -11,4 +11,6 @@ public interface Bot {
     void formResponseToCommand(Update update, Long chatId) throws TelegramApiException;
 
     void botConnect() throws TelegramApiException;
+
+    void botDisconnect();
 }

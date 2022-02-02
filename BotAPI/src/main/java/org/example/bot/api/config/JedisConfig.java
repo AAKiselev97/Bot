@@ -1,5 +1,6 @@
 package org.example.bot.api.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CachingConfigurerSupport;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -8,14 +9,15 @@ import redis.clients.jedis.JedisPoolConfig;
 
 @Configuration
 public class JedisConfig extends CachingConfigurerSupport {
-    private static final JedisPool pool = new JedisPool(new JedisPoolConfig(), "127.0.0.1", 6379);
+    @Value("${jedis.host}")
+    private String host;
+
+    @Value("${jedis.port}")
+    private int port;
 
     @Bean
-    public static JedisPool getJedis() {
-        return pool;
+    public JedisPool getJedis() {
+        return new JedisPool(new JedisPoolConfig(), host, port);
     }
 
-    public static void destroy() {
-        pool.destroy();
-    }
 }

@@ -40,7 +40,8 @@ public class TelegramBotApiRepository implements BotApiRepository {
             }
             throw new ServerErrorException("something wrong in data base");
         } catch (RuntimeException e) {
-            throw new BadRequestException("value " + (string.length() > 40 ? "in redis nor found" : "by token [" + string + "] not found"));
+            //проверка, что бы контроллер не отправил в ошибке чей-то JSON из jedis
+            throw new BadRequestException("value " + (string.length() > 36 ? "in redis nor found" : "by token [" + string + "] not found"));
         }
     }
 }

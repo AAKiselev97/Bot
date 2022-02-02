@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 import org.example.bot.api.exception.BadRequestException;
 import org.example.bot.api.exception.ServerErrorException;
 import org.example.bot.api.service.BotApiService;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -33,6 +34,16 @@ public class TelegramBotApiController {
     @GetMapping(value = "/userByChat/{chatId}&{token}", produces = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<?> getUserByChat(@PathVariable(name = "chatId") String chatId, @PathVariable(name = "token") String token) {
         return new ResponseEntity<>(botApiService.getUserStatsByChat(chatId, token), HttpStatus.OK);
+    }
+
+    @GetMapping(value = "/formUserHistory/{token}")
+    public ResponseEntity<?> formUserHistory(@PathVariable(name = "token") String token) {
+        return new ResponseEntity<>(botApiService.formUserHistory(token), HttpStatus.OK);
+    }
+
+    @GetMapping(value = "/getUserHistory/{token}", produces = {MediaType.APPLICATION_PDF_VALUE})
+    public ResponseEntity<Resource> getUserHistory(@PathVariable(name = "token") String token) {
+        return new ResponseEntity<>(botApiService.getUserHistory(token), HttpStatus.OK);
     }
 
     @ExceptionHandler(Exception.class)

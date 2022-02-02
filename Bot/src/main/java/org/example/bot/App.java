@@ -15,16 +15,15 @@ import java.util.Properties;
 public class App {
     public static void main(String[] args) throws IOException, SQLException, TelegramApiException {
         App app = new App();
-        Properties properties = app.getProperties();
-        JDBCConfig.init(properties);
-        JedisConfig.init(properties);
-        RabbitMQConfig.init(properties);
-        Bot bot = new TelegramBot(properties);
+        JDBCConfig.init(app.getProperties("/mysql.properties"));
+        JedisConfig.init(app.getProperties("/jedis.properties"));
+        RabbitMQConfig.init(app.getProperties("/mq.properties"));
+        Bot bot = new TelegramBot(app.getProperties("/telegramBot.properties"));
         bot.botConnect();
     }
 
-    private Properties getProperties() throws IOException {
-        try (InputStream is = this.getClass().getResourceAsStream("/config.properties")) {
+    private Properties getProperties(String fileName) throws IOException {
+        try (InputStream is = this.getClass().getResourceAsStream(fileName)) {
             Properties properties = new Properties();
             properties.load(is);
             return properties;

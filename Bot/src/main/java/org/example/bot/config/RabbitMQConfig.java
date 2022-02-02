@@ -11,7 +11,7 @@ import java.util.concurrent.TimeoutException;
 public class RabbitMQConfig {
     private static ConnectionFactory connectionFactory;
 
-    public static void init(Properties properties){
+    public static void init(Properties properties) {
         connectionFactory = new ConnectionFactory();
         connectionFactory.setUsername(properties.getProperty("RabbitMQ.username"));
         connectionFactory.setPassword(properties.getProperty("RabbitMQ.password"));

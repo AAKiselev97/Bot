@@ -9,7 +9,7 @@ import java.util.Properties;
 public class JedisConfig {
     private static JedisPool pool;
 
-    public static void init(Properties properties){
+    public static void init(Properties properties) {
         pool = new JedisPool(new JedisPoolConfig(), properties.getProperty("jedis.host"), Integer.parseInt(properties.getProperty("jedis.port")));
     }
 

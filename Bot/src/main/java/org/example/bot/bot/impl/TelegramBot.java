@@ -1,24 +1,24 @@
 package org.example.bot.bot.impl;
 
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.DeliverCallback;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.example.bot.api.RabbitProvider;
 import org.example.bot.bot.Bot;
 import org.example.bot.command.Commands;
 import org.example.bot.config.JedisConfig;
-import org.example.bot.config.RabbitMQConfig;
 import org.example.bot.counter.MessageCounter;
 import org.example.bot.entity.TGMessage;
+import org.example.bot.entity.statusentity.TGUser;
 import org.example.bot.provider.JSONProvider;
 import org.example.bot.provider.MessageProvider;
 import org.example.bot.provider.impl.JSONProviderImpl;
 import org.example.bot.provider.impl.MessageProviderImpl;
 import org.example.bot.util.JSONConverter;
+import org.example.bot.util.PDFGenerator;
 import org.example.bot.util.TXTScanner;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
@@ -34,21 +34,21 @@ import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 import redis.clients.jedis.Jedis;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Properties;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 
 @AllArgsConstructor
 public class TelegramBot extends TelegramLongPollingBot implements Bot {
-    private static final String QUEUE_NAME = "BotMessage";
+    private static final String QUEUE_BOT_MESSAGE_NAME = "BotMessageQueue";
     private static final Logger log = LogManager.getLogger(TelegramBot.class);
     private static final String TELEGRAM_USER_SIGN = "@";
     private static final String TELEGRAM_COMMAND_SIGN = "/";
-    private static Connection connection;
-    private static Channel channel;
+    private static RabbitProvider rabbitProvider;
     private static JSONProvider jsonProvider;
     private static MessageProvider messageProvider;
     private static MessageCounter messageCounter;
@@ -66,42 +66,18 @@ public class TelegramBot extends TelegramLongPollingBot implements Bot {
         messageProvider = new MessageProviderImpl(TELEGRAM_USER_SIGN);
         messageCounter = MessageCounter.getMessageCounter();
         messageCounter.init();
-        connection = RabbitMQConfig.getConnection();
-        channel = connection.createChannel();
+        rabbitProvider = new RabbitProvider(this);
         this.userName = properties.getProperty("userName");
         this.token = properties.getProperty("token");
     }
 
     @Override
     public void onUpdateReceived(Update update) {
-        sendJSON(update);
-    }
-
-    public void sendJSON(Update update) {
         try {
-            channel.queueDeclare(QUEUE_NAME, false, false, false, null);
-            String json = JSONConverter.updateToJSONInString(update);
-            channel.basicPublish("", QUEUE_NAME, null, json.getBytes(StandardCharsets.UTF_8));
-            log.debug("[x] Sent json");
-            receiveMessage();
-        } catch (IOException | TimeoutException ignored) {
-
+            rabbitProvider.sendMessage(JSONConverter.updateToJSONInString(update), QUEUE_BOT_MESSAGE_NAME);
+        } catch (IOException e) {
+            log.error(e);
         }
-    }
-
-    public void receiveMessage() throws IOException, TimeoutException {
-        channel.queueDeclare(QUEUE_NAME, false, false, false, null);
-        DeliverCallback deliverCallback = (consumerTag, delivery) -> {
-            String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
-            log.debug(" [x] Received json");
-            try {
-                getMessage(JSONConverter.jsonToUpdate(message));
-            } catch (TelegramApiException e) {
-                e.printStackTrace();
-            }
-        };
-        channel.basicConsume(QUEUE_NAME, true, deliverCallback, consumerTag -> {
-        });
     }
 
     public void getMessage(Update update) throws TelegramApiException {
@@ -156,6 +132,19 @@ public class TelegramBot extends TelegramLongPollingBot implements Bot {
         } catch (IOException e) {
             log.error(e);
             throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void formHistory(String fileName, String id) {
+        try (Jedis jedis = JedisConfig.getJedis()) {
+            try {
+                TGUser userInDB = JSONConverter.jsonToTGUser(jedis.get(id));
+                PDFGenerator.init(fileName);
+                PDFGenerator.generatePdfFromResultSet(messageProvider.getHistory(userInDB.getUserName()));
+            } catch (JsonProcessingException e) {
+                log.error(e);
+            }
         }
     }
 
@@ -232,12 +221,7 @@ public class TelegramBot extends TelegramLongPollingBot implements Bot {
 
     @Override
     public void botDisconnect() {
-        try {
-            connection.close();
-            channel.close();
-        } catch (IOException | TimeoutException e) {
-            e.printStackTrace();
-        }
+        rabbitProvider.disconnect();
     }
 
     @Override

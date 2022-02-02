@@ -12,12 +12,25 @@
 
 Настройки Redis по умолчанию  
 
-Файл config.properties:  
+Файл telegramBot.properties:  
 - userName=[userName бота, полученный от BotFather]
-- token=[token бота, полученный от BotFather]
+- token=[token бота, полученный от BotFather]  
+
+Файл mysql.properties
 - databaseConnection=[url присоединения к базе данных]
 - databaseLogin=[логин для базы данных]
 - databasePassword=[пароль для базы данных]  
 
+Файл jedis.properties
+- jedis.host=[хост для подключения к Redis, по умолчанию 127.0.0.1]
+- jedis.port=[порт для подключения к Redis, по умолчанию 6379]
 
-2 Модуль: BotAPI, позволяет брать статистику по юзеру, чату, юзеру в чате в виде JSON, доступ осуществляется по токену, доступному в Redis 30 дней
+Файл mq.properties
+- RabbitMQ.username=[логин для rabbitMq]
+- RabbitMQ.password=[пароль для rabbitMQ]
+- RabbitMQ.virtualHost=/
+- RabbitMQ.host=[хост для подключения к rabbitMq, по умолчанию 127.0.0.1]
+- RabbitMQ.port=[порт для подключения к rabbitMq, по умолчанию 5672]
+
+
+2 Модуль: BotAPI, позволяет брать статистику по юзеру, чату, юзеру в чате в виде JSON, доступ осуществляется по токену, доступному в Redis 30 дней, а так же создавать пдф файл с историей сообщений и скачивать его

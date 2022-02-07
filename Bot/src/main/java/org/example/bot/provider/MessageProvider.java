@@ -11,5 +11,5 @@ public interface MessageProvider {
 
     List<String> getHistory(String userName);
 
-    List<MessageInDB> searchByText(String text, String username);
+    List<MessageInDB> searchByText(String text, String username, int page);
 }

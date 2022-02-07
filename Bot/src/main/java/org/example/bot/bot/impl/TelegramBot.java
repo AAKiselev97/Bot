@@ -256,8 +256,8 @@ public class TelegramBot extends TelegramLongPollingBot implements Bot {
     }
 
     @Override
-    public List<MessageInDB> searchByText(String text, String username) {
-        return messageProvider.searchByText(text, username);
+    public List<MessageInDB> searchByText(String text, String username, int page) {
+        return messageProvider.searchByText(text, username, page);
     }
 
     private String formHelloMessage(Update update) {

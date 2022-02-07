@@ -83,12 +83,12 @@ public class RabbitProvider {
                 case QUEUE_FULLTEXT_SEARCH:
                     try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
                          ObjectOutputStream outputStream = new ObjectOutputStream(byteArrayOutputStream)) {
-                        String[] strings1 = message.split(" _ ");
+                        String[] params = message.split(" _ ");
                         AMQP.BasicProperties reply = new AMQP.BasicProperties
                                 .Builder()
                                 .correlationId(delivery.getProperties().getCorrelationId())
                                 .build();
-                        List<MessageInDB> messageInDBList = bot.searchByText(strings1[0], strings1[1]);
+                        List<MessageInDB> messageInDBList = bot.searchByText(params[0], params[1], Integer.parseInt(params[2]));
                         outputStream.writeObject(messageInDBList);
                         channel.basicPublish("", delivery.getProperties().getReplyTo(), reply, byteArrayOutputStream.toByteArray());
                     }

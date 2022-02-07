@@ -93,9 +93,12 @@ public class TelegramBotApiService implements BotApiService {
     }
 
     @Override
-    public List<MessageInDB> searchByText(String token, String text) {
+    public List<MessageInDB> searchByText(String token, String text, int page) {
         String username = botApiRepository.getUser(botApiRepository.getUserId(token)).getUserName();
-        String message = username + " _ " + text;
+        if (page<1){
+            throw new BadRequestException("page cannot be < 1");
+        }
+        String message = username + " _ " + text + " _ " + page;
         try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream((byte[]) rabbitTemplate.convertSendAndReceive(QUEUE_FULLTEXT_SEARCH, message));
              ObjectInputStream inputStream = new ObjectInputStream(byteArrayInputStream)) {
             return (List<MessageInDB>) inputStream.readObject();

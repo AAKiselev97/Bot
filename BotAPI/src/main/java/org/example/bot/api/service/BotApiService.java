@@ -18,5 +18,5 @@ public interface BotApiService {
 
     InputStreamResource getUserHistory(String token);
 
-    List<MessageInDB> searchByText(String token, String text);
+    List<MessageInDB> searchByText(String token, String text, int page);
 }

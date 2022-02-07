@@ -19,7 +19,7 @@ public interface Bot {
 
     void formHistory(String fileName, String id);
 
-    List<MessageInDB> searchByText(String text, String username);
+    List<MessageInDB> searchByText(String text, String username, int page);
 
     void botDisconnect();
 }

@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MessageProviderImpl implements MessageProvider {
+    private final static Integer LINE_IN_PAGE = 10;
     private final static Logger log = LogManager.getLogger(MessageProviderImpl.class);
 
     @Override
@@ -58,11 +59,11 @@ public class MessageProviderImpl implements MessageProvider {
     }
 
     @Override
-    public List<MessageInDB> searchByText(String text, String username) {
+    public List<MessageInDB> searchByText(String text, String username, int page) {
         List<MessageInDB> messageInDBList = new ArrayList<>();
         try (Session session = HibernateConfig.getSession()) {
             session.createSQLQuery("SELECT * FROM tgbot.descrypted_messages WHERE MATCH (message) AGAINST (:message) AND username = :username;")
-                    .setParameter("message", text).setParameter("username", username)
+                    .setParameter("message", text).setParameter("username", username).setFirstResult((page-1)*LINE_IN_PAGE).setMaxResults(page*LINE_IN_PAGE)
                     .stream().forEach(o -> messageInDBList.add(Parser.parseArrayToMessageInDB((Object[]) o)));
         } catch (SQLException e) {
             log.error(e);

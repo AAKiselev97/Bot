@@ -49,9 +49,9 @@ public class TelegramBotApiController {
         return new ResponseEntity<>(botApiService.getUserHistory(token), HttpStatus.OK);
     }
 
-    @GetMapping(value = "/searchByText/{token}&{text}", produces = {MediaType.APPLICATION_JSON_VALUE})
-    public ResponseEntity<List<MessageInDB>> searchByText(@PathVariable(name = "token") String token, @PathVariable(name = "text") String text) {
-        return new ResponseEntity<>(botApiService.searchByText(token, text), HttpStatus.OK);
+    @GetMapping(value = "/searchByText/{token}&{text}/page{page}", produces = {MediaType.APPLICATION_JSON_VALUE})
+    public ResponseEntity<List<MessageInDB>> searchByText(@PathVariable(name = "token") String token, @PathVariable(name = "text") String text, @PathVariable(name = "page") int page) {
+        return new ResponseEntity<>(botApiService.searchByText(token, text, page), HttpStatus.OK);
     }
 
     @ExceptionHandler(Exception.class)

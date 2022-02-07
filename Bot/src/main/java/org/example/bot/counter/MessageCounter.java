@@ -60,6 +60,7 @@ public class MessageCounter implements Serializable {
                 try {
                     file.createNewFile();
                 } catch (IOException ex) {
+                    e.printStackTrace();
                     log.error(e);
                 }
                 log.error(e);

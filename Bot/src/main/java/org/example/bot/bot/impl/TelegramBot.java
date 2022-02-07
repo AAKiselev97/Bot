@@ -11,7 +11,8 @@ import org.example.bot.bot.Bot;
 import org.example.bot.command.Commands;
 import org.example.bot.config.JedisConfig;
 import org.example.bot.counter.MessageCounter;
-import org.example.bot.entity.TGMessage;
+import org.example.bot.entity.JSONMessageInDB;
+import org.example.bot.entity.MessageInDB;
 import org.example.bot.entity.statusentity.TGUser;
 import org.example.bot.provider.JSONProvider;
 import org.example.bot.provider.MessageProvider;
@@ -19,6 +20,7 @@ import org.example.bot.provider.impl.JSONProviderImpl;
 import org.example.bot.provider.impl.MessageProviderImpl;
 import org.example.bot.util.JSONConverter;
 import org.example.bot.util.PDFGenerator;
+import org.example.bot.util.Parser;
 import org.example.bot.util.TXTScanner;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
@@ -61,9 +63,9 @@ public class TelegramBot extends TelegramLongPollingBot implements Bot {
     @Getter
     private String token;
 
-    public TelegramBot(Properties properties) throws SQLException, IOException {
+    public TelegramBot(Properties properties) throws IOException {
         jsonProvider = new JSONProviderImpl();
-        messageProvider = new MessageProviderImpl(TELEGRAM_USER_SIGN);
+        messageProvider = new MessageProviderImpl();
         messageCounter = MessageCounter.getMessageCounter();
         messageCounter.init();
         rabbitProvider = new RabbitProvider(this);
@@ -82,15 +84,17 @@ public class TelegramBot extends TelegramLongPollingBot implements Bot {
 
     public void getMessage(Update update) throws TelegramApiException {
         log.debug("Receive new Update. updateID: " + update.getUpdateId());
-        jsonProvider.create(update);
+        JSONMessageInDB jsonMessageInDB = Parser.parseUpdateToJsonMessageInDB(update);
+        jsonProvider.create(jsonMessageInDB);
         if (update.hasEditedMessage()) {
-            messageProvider.update(TGMessage.parseMessageToTGMessage(update.getEditedMessage()));
+            MessageInDB message = Parser.parseUpdateToMessageInDB(update, jsonMessageInDB);
+            messageProvider.update(message);
             return;
         }
         Message message = null;
         if (update.getMessage().hasText()) {
             message = update.getMessage();
-            messageProvider.create(TGMessage.parseMessageToTGMessage(message));
+            messageProvider.create(Parser.parseUpdateToMessageInDB(update, jsonMessageInDB));
             messageCounter.scanString(message.getChat(), message.getFrom(), message.getText());
             if (!isMessageForBot(update)) {
                 return;
@@ -120,7 +124,7 @@ public class TelegramBot extends TelegramLongPollingBot implements Bot {
             throw new RuntimeException(e);
         }
         for (String helloWord : helloWordList) {
-            if (update.getMessage().getText().toLowerCase().startsWith(helloWord)) {
+            if (update.getMessage().getText().toLowerCase().startsWith(helloWord.toLowerCase())) {
                 sendMessage(formHelloMessage(update), update.getMessage().getChatId());
                 return;
             }

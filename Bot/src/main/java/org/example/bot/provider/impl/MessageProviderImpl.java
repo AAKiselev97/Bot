@@ -2,49 +2,39 @@ package org.example.bot.provider.impl;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.example.bot.config.JDBCConfig;
-import org.example.bot.entity.TGMessage;
+import org.example.bot.config.HibernateConfig;
+import org.example.bot.entity.MessageInDB;
 import org.example.bot.provider.MessageProvider;
+import org.hibernate.Session;
+import org.hibernate.Transaction;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class MessageProviderImpl implements MessageProvider {
     private final static Logger log = LogManager.getLogger(MessageProviderImpl.class);
-    private final String TELEGRAM_USER_SIGN;
-    private static Connection connection;
-
-    public MessageProviderImpl(String sign) throws SQLException {
-        this.TELEGRAM_USER_SIGN = sign;
-        connection = JDBCConfig.getConnection();
-    }
 
     @Override
-    public void create(TGMessage message) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO tgbot.descrypted_messages (json_id, chat_id, message, message_id, type, username)" +
-                "VALUES ((SELECT MAX(`id`) FROM tgbot.json_messages), ?, ?, ?, ?, ?);")) {
-            preparedStatement.setLong(1, message.getChatId());
-            preparedStatement.setString(2, message.getMessage());
-            preparedStatement.setLong(3, message.getMessageId());
-            preparedStatement.setString(4, message.getType().name().toLowerCase());
-            preparedStatement.setString(5, TELEGRAM_USER_SIGN + message.getUserName());
-            preparedStatement.execute();
+    public void create(MessageInDB messageInDB) {
+        try (Session session = HibernateConfig.getSession()) {
+            Transaction transaction = session.beginTransaction();
+            session.save(messageInDB);
+            transaction.commit();
         } catch (SQLException e) {
-            log.error(e.getMessage());
+            log.error(e);
         }
     }
 
     @Override
-    public void update(TGMessage message) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement("UPDATE tgbot.descrypted_messages" +
-                " SET message = ?, update_date = CURRENT_TIMESTAMP, is_update = true WHERE message_id = ?")) {
-            preparedStatement.setString(1, message.getMessage());
-            preparedStatement.setLong(2, message.getMessageId());
-            preparedStatement.execute();
+    public void update(MessageInDB messageInDB) {
+        try (Session session = HibernateConfig.getSession()) {
+            messageInDB.setId((int) session.createQuery("SELECT M.id  FROM MessageInDB M WHERE M.chatId = :chatId AND M.messageId = :messageId")
+                    .setParameter("chatId", messageInDB.getChatId())
+                    .setParameter("messageId", messageInDB.getMessageId()).uniqueResult());
+            Transaction transaction = session.beginTransaction();
+            session.update(messageInDB);
+            transaction.commit();
         } catch (SQLException e) {
             log.error(e);
         }
@@ -52,19 +42,17 @@ public class MessageProviderImpl implements MessageProvider {
 
     @Override
     public List<String> getHistory(String userName) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT creation_date, chat_id, message FROM tgbot.descrypted_messages WHERE username = ?;")) {
-            preparedStatement.setString(1, userName);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            List<String> list = new ArrayList<>();
-            while (resultSet.next()) {
-                String string = "Creation date [" + (resultSet.getTimestamp(1).toLocalDateTime()) + "], chatId [" + resultSet.getLong(2) +
-                        "]\nMessage [" + resultSet.getString(3) + "]\n";
-                list.add(string);
+        List<String> historyStrings = new ArrayList<>();
+        try (Session session = HibernateConfig.getSession()) {
+            List<Object[]> result = session.createQuery("SELECT M.creationDate, M.updateDate, M.chatId, M.message FROM MessageInDB M WHERE M.username = :username")
+                    .setParameter("username", userName).list();
+            for (Object[] objects : result) {
+                historyStrings.add("Creation date [" + objects[0] + (objects[1] == null ? "" : "], update date [" + objects[1]) + "], chatId [" + objects[2] +
+                        "]\nMessage [" + objects[3] + "]\n");
             }
-            return list;
         } catch (SQLException e) {
             log.error(e);
-            throw new RuntimeException(e);
         }
+        return historyStrings;
     }
 }

@@ -10,4 +10,6 @@ public interface MessageProvider {
     void update(MessageInDB message);
 
     List<String> getHistory(String userName);
+
+    List<MessageInDB> searchByText(String text, String username);
 }

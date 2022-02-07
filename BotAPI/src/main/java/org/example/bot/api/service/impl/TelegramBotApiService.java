@@ -3,6 +3,7 @@ package org.example.bot.api.service.impl;
 import org.example.bot.api.exception.BadRequestException;
 import org.example.bot.api.exception.EnoughRightException;
 import org.example.bot.api.exception.ServerErrorException;
+import org.example.bot.api.model.telegram.MessageInDB;
 import org.example.bot.api.model.telegram.TGChat;
 import org.example.bot.api.model.telegram.TGUser;
 import org.example.bot.api.repository.BotApiRepository;
@@ -12,14 +13,14 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import java.io.*;
+import java.util.List;
 import java.util.UUID;
 
 @Service
 public class TelegramBotApiService implements BotApiService {
     private static final String QUEUE_GET_HISTORY_TO_PDF = "GetHistoryQueue";
+    private static final String QUEUE_FULLTEXT_SEARCH = "GetSearch";
     private final RabbitTemplate rabbitTemplate;
     private final Binding binding;
     private final BotApiRepository botApiRepository;
@@ -88,6 +89,18 @@ public class TelegramBotApiService implements BotApiService {
             return "all good, history in /telegram/bot/get/getUserHistory/{token} by token" + tokenByHistory;
         } catch (Exception e) {
             return "something wrong";
+        }
+    }
+
+    @Override
+    public List<MessageInDB> searchByText(String token, String text) {
+        String username = botApiRepository.getUser(botApiRepository.getUserId(token)).getUserName();
+        String message = username + " _ " + text;
+        try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream((byte[]) rabbitTemplate.convertSendAndReceive(QUEUE_FULLTEXT_SEARCH, message));
+             ObjectInputStream inputStream = new ObjectInputStream(byteArrayInputStream)) {
+            return (List<MessageInDB>) inputStream.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            throw new ServerErrorException(e);
         }
     }
 

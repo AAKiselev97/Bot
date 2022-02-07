@@ -4,12 +4,15 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.example.bot.api.exception.BadRequestException;
 import org.example.bot.api.exception.ServerErrorException;
+import org.example.bot.api.model.telegram.MessageInDB;
 import org.example.bot.api.service.BotApiService;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/telegram/bot/get")
@@ -44,6 +47,11 @@ public class TelegramBotApiController {
     @GetMapping(value = "/getUserHistory/{token}", produces = {MediaType.APPLICATION_PDF_VALUE})
     public ResponseEntity<Resource> getUserHistory(@PathVariable(name = "token") String token) {
         return new ResponseEntity<>(botApiService.getUserHistory(token), HttpStatus.OK);
+    }
+
+    @GetMapping(value = "/searchByText/{token}&{text}", produces = {MediaType.APPLICATION_JSON_VALUE})
+    public ResponseEntity<List<MessageInDB>> searchByText(@PathVariable(name = "token") String token, @PathVariable(name = "text") String text) {
+        return new ResponseEntity<>(botApiService.searchByText(token, text), HttpStatus.OK);
     }
 
     @ExceptionHandler(Exception.class)

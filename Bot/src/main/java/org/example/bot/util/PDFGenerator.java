@@ -1,8 +1,8 @@
 package org.example.bot.util;
 
-import com.lowagie.text.*;
 import com.lowagie.text.Font;
 import com.lowagie.text.List;
+import com.lowagie.text.*;
 import com.lowagie.text.pdf.PdfWriter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

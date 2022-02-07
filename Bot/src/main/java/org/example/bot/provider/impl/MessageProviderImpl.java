@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 import org.example.bot.config.HibernateConfig;
 import org.example.bot.entity.MessageInDB;
 import org.example.bot.provider.MessageProvider;
+import org.example.bot.util.Parser;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 
@@ -54,5 +55,18 @@ public class MessageProviderImpl implements MessageProvider {
             log.error(e);
         }
         return historyStrings;
+    }
+
+    @Override
+    public List<MessageInDB> searchByText(String text, String username) {
+        List<MessageInDB> messageInDBList = new ArrayList<>();
+        try (Session session = HibernateConfig.getSession()) {
+            session.createSQLQuery("SELECT * FROM tgbot.descrypted_messages WHERE MATCH (message) AGAINST (:message) AND username = :username;")
+                    .setParameter("message", text).setParameter("username", username)
+                    .stream().forEach(o -> messageInDBList.add(Parser.parseArrayToMessageInDB((Object[]) o)));
+        } catch (SQLException e) {
+            log.error(e);
+        }
+        return messageInDBList;
     }
 }

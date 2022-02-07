@@ -36,7 +36,6 @@ import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 import redis.clients.jedis.Jedis;
 
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
@@ -254,6 +253,11 @@ public class TelegramBot extends TelegramLongPollingBot implements Bot {
             }
             botConnect();
         }
+    }
+
+    @Override
+    public List<MessageInDB> searchByText(String text, String username) {
+        return messageProvider.searchByText(text, username);
     }
 
     private String formHelloMessage(Update update) {

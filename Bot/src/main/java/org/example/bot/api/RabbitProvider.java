@@ -12,10 +12,8 @@ import org.example.bot.entity.MessageInDB;
 import org.example.bot.util.JSONConverter;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
@@ -79,19 +77,17 @@ public class RabbitProvider {
                     } else {
                         channel.basicPublish("", delivery.getProperties().getReplyTo(), replyProps, "File not ready".getBytes());
                     }
+                    log.debug("[x] Sent json");
                     break;
                 case QUEUE_FULLTEXT_SEARCH:
-                    try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                         ObjectOutputStream outputStream = new ObjectOutputStream(byteArrayOutputStream)) {
-                        String[] params = message.split(" _ ");
-                        AMQP.BasicProperties reply = new AMQP.BasicProperties
-                                .Builder()
-                                .correlationId(delivery.getProperties().getCorrelationId())
-                                .build();
-                        List<MessageInDB> messageInDBList = bot.searchByText(params[0], params[1], Integer.parseInt(params[2]));
-                        outputStream.writeObject(messageInDBList);
-                        channel.basicPublish("", delivery.getProperties().getReplyTo(), reply, byteArrayOutputStream.toByteArray());
-                    }
+                    String[] params = message.split(" _ ");
+                    AMQP.BasicProperties reply = new AMQP.BasicProperties
+                            .Builder()
+                            .correlationId(delivery.getProperties().getCorrelationId())
+                            .build();
+                    List<MessageInDB> messageInDBList = bot.searchByText(params[0], params[1], Integer.parseInt(params[2]));
+                    channel.basicPublish("", delivery.getProperties().getReplyTo(), reply, JSONConverter.MessageInDBListInString(messageInDBList).getBytes());
+                    log.debug("[x] Sent json");
                     break;
 
             }

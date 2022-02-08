@@ -8,12 +8,15 @@ import org.example.bot.api.model.telegram.TGChat;
 import org.example.bot.api.model.telegram.TGUser;
 import org.example.bot.api.repository.BotApiRepository;
 import org.example.bot.api.service.BotApiService;
+import org.example.bot.api.util.JSONConverter;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.util.List;
 import java.util.UUID;
 
@@ -99,12 +102,9 @@ public class TelegramBotApiService implements BotApiService {
             throw new BadRequestException("page cannot be < 1");
         }
         String message = username + " _ " + text + " _ " + page;
-        try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream((byte[]) rabbitTemplate.convertSendAndReceive(QUEUE_FULLTEXT_SEARCH, message));
-             ObjectInputStream inputStream = new ObjectInputStream(byteArrayInputStream)) {
-            return (List<MessageInDB>) inputStream.readObject();
-        } catch (IOException | ClassNotFoundException e) {
-            throw new ServerErrorException(e);
-        }
+        byte[] bytes = (byte[]) rabbitTemplate.convertSendAndReceive(QUEUE_FULLTEXT_SEARCH, message);
+        System.out.println(new String(bytes));
+        return JSONConverter.JSONToMessageInDBList(new String(bytes));
     }
 
     private void checkId(String id) {

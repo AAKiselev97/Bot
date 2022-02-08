@@ -5,8 +5,6 @@ import org.example.bot.entity.JSONMessageInDB;
 import org.example.bot.entity.MessageInDB;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
-import java.sql.Timestamp;
-
 public class Parser {
     private static final String TELEGRAM_USER_SIGN = "@";
 

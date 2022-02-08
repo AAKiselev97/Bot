@@ -5,7 +5,6 @@ import org.apache.logging.log4j.Logger;
 import org.example.bot.config.HibernateConfig;
 import org.example.bot.entity.MessageInDB;
 import org.example.bot.provider.MessageProvider;
-import org.example.bot.util.Parser;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 
@@ -59,10 +58,11 @@ public class MessageProviderImpl implements MessageProvider {
     }
 
     @Override
-    public List<MessageInDB> searchByText(String text, String username, int page) {
+    public List<MessageInDB> searchByText(String username, String text, int page) {
         List<MessageInDB> messageInDBList = new ArrayList<>();
+        System.out.println(text + " " + username + " " + page);
         try (Session session = HibernateConfig.getSession()) {
-            messageInDBList = (List<MessageInDB>)session.createSQLQuery("SELECT * FROM tgbot.descrypted_messages WHERE MATCH (message) AGAINST (:message) AND username = :username;")
+            messageInDBList = (List<MessageInDB>)session.createSQLQuery("SELECT * FROM tgbot.descrypted_messages WHERE username = :username AND MATCH (message) AGAINST (:message)")
                     .setParameter("message", text).setParameter("username", username).setFirstResult((page-1)*LINE_IN_PAGE).setMaxResults(page*LINE_IN_PAGE).addEntity(MessageInDB.class).list();
         } catch (SQLException e) {
             log.error(e);
@@ -70,4 +70,3 @@ public class MessageProviderImpl implements MessageProvider {
         return messageInDBList;
     }
 }
-

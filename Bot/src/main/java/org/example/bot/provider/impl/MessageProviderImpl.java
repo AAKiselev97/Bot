@@ -62,8 +62,8 @@ public class MessageProviderImpl implements MessageProvider {
         List<MessageInDB> messageInDBList = new ArrayList<>();
         System.out.println(text + " " + username + " " + page);
         try (Session session = HibernateConfig.getSession()) {
-            messageInDBList = (List<MessageInDB>)session.createSQLQuery("SELECT * FROM tgbot.descrypted_messages WHERE username = :username AND MATCH (message) AGAINST (:message)")
-                    .setParameter("message", text).setParameter("username", username).setFirstResult((page-1)*LINE_IN_PAGE).setMaxResults(page*LINE_IN_PAGE).addEntity(MessageInDB.class).list();
+            messageInDBList = (List<MessageInDB>) session.createSQLQuery("SELECT * FROM tgbot.descrypted_messages WHERE username = :username AND MATCH (message) AGAINST (:message)")
+                    .setParameter("message", text).setParameter("username", username).setFirstResult((page - 1) * LINE_IN_PAGE).setMaxResults(page * LINE_IN_PAGE).addEntity(MessageInDB.class).list();
         } catch (SQLException e) {
             log.error(e);
         }

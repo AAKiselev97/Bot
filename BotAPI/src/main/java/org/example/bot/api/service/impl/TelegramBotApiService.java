@@ -98,7 +98,7 @@ public class TelegramBotApiService implements BotApiService {
     @Override
     public List<MessageInDB> searchByText(String token, String text, int page) {
         String username = botApiRepository.getUser(botApiRepository.getUserId(token)).getUserName();
-        if (page<1){
+        if (page < 1) {
             throw new BadRequestException("page cannot be < 1");
         }
         String message = username + " _ " + text + " _ " + page;

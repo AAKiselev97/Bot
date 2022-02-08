@@ -1,7 +1,9 @@
 package org.example.bot.entity;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.example.bot.bot.MessageType;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.NaturalId;
@@ -14,6 +16,8 @@ import java.sql.Timestamp;
 @Table(name = "descrypted_messages")
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class MessageInDB {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

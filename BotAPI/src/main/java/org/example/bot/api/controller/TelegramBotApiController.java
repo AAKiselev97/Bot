@@ -1,10 +1,18 @@
 package org.example.bot.api.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.example.bot.api.exception.BadRequestException;
 import org.example.bot.api.exception.ServerErrorException;
 import org.example.bot.api.model.telegram.MessageInDB;
+import org.example.bot.api.model.telegram.TGChat;
+import org.example.bot.api.model.telegram.TGUser;
 import org.example.bot.api.service.BotApiService;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
@@ -24,31 +32,85 @@ public class TelegramBotApiController {
         this.botApiService = botApiService;
     }
 
+    @Operation(summary = "Get user by token")
+    @ApiResponses(value = {@ApiResponse(
+            responseCode = "200",
+            description = "found user",
+            content = {
+                    @Content(
+                            mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = TGUser.class)))
+            }
+    )})
     @GetMapping(value = "/user&{token}", produces = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<?> getUser(@PathVariable(name = "token") String token) {
         return new ResponseEntity<>(botApiService.getUserStats(token), HttpStatus.OK);
     }
 
+    @Operation(summary = "Get chat by chatId & token")
+    @ApiResponses(value = {@ApiResponse(
+            responseCode = "200",
+            description = "found chat",
+            content = {
+                    @Content(
+                            mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = TGChat.class)))
+            }
+    )})
     @GetMapping(value = "/chat/{chatId}&{token}", produces = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<?> getChat(@PathVariable(name = "chatId") String chatId, @PathVariable(name = "token") String token) {
         return new ResponseEntity<>(botApiService.getChatStats(chatId, token), HttpStatus.OK);
     }
 
+    @Operation(summary = "Get user by chatId & token")
+    @ApiResponses(value = {@ApiResponse(
+            responseCode = "200",
+            description = "found user by chat",
+            content = {
+                    @Content(
+                            mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = TGUser.class)))
+            }
+    )})
     @GetMapping(value = "/userByChat/{chatId}&{token}", produces = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<?> getUserByChat(@PathVariable(name = "chatId") String chatId, @PathVariable(name = "token") String token) {
         return new ResponseEntity<>(botApiService.getUserStatsByChat(chatId, token), HttpStatus.OK);
     }
 
+    @Operation(summary = "Form user history by token")
+    @ApiResponses(value = {@ApiResponse(
+            responseCode = "200",
+            description = "request send"
+    )})
     @GetMapping(value = "/formUserHistory/{token}")
     public ResponseEntity<?> formUserHistory(@PathVariable(name = "token") String token) {
         return new ResponseEntity<>(botApiService.formUserHistory(token), HttpStatus.OK);
     }
 
+    @Operation(summary = "Get user history by token")
+    @ApiResponses(value = {@ApiResponse(
+            responseCode = "200",
+            description = "return pdf with message history",
+            content = {
+                    @Content(
+                            mediaType = "application/pdf")
+            }
+    )})
     @GetMapping(value = "/getUserHistory/{token}", produces = {MediaType.APPLICATION_PDF_VALUE})
     public ResponseEntity<Resource> getUserHistory(@PathVariable(name = "token") String token) {
         return new ResponseEntity<>(botApiService.getUserHistory(token), HttpStatus.OK);
     }
 
+    @Operation(summary = "Fulltext search by token & text by page")
+    @ApiResponses(value = {@ApiResponse(
+            responseCode = "200",
+            description = "found messages",
+            content = {
+                    @Content(
+                            mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = MessageInDB.class)))
+            }
+    )})
     @GetMapping(value = "/searchByText/{token}&{text}/page{page}", produces = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<List<MessageInDB>> searchByText(@PathVariable(name = "token") String token, @PathVariable(name = "text") String text, @PathVariable(name = "page") int page) {
         return new ResponseEntity<>(botApiService.searchByText(token, text, page), HttpStatus.OK);

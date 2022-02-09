@@ -14,14 +14,6 @@ import java.util.List;
 @Configuration
 public class SwaggerConfig {
     @Bean
-    public GroupedOpenApi publicUserApi() {
-        return GroupedOpenApi.builder()
-                .group("Users")
-                .pathsToMatch("/users/**")
-                .build();
-    }
-
-    @Bean
     public OpenAPI customOpenApi(@Value("${application-description}")String appDescription,
                                  @Value("${application-version}")String appVersion) {
         return new OpenAPI().info(new Info().title("Application API")

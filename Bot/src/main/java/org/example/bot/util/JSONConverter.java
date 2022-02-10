@@ -3,9 +3,12 @@ package org.example.bot.util;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import org.example.bot.entity.MessageInDB;
 import org.example.bot.entity.statusentity.TGChat;
 import org.example.bot.entity.statusentity.TGUser;
 import org.telegram.telegrambots.meta.api.objects.Update;
+
+import java.util.List;
 
 public class JSONConverter {
     public static String tgUserToJSONInString(TGUser tgUser) throws JsonProcessingException {
@@ -16,6 +19,11 @@ public class JSONConverter {
     public static String tgChatToJSONInString(TGChat tgChat) throws JsonProcessingException {
         ObjectWriter objectWriter = new ObjectMapper().writer().withDefaultPrettyPrinter();
         return objectWriter.writeValueAsString(tgChat);
+    }
+
+    public static String MessageInDBListInString(List<MessageInDB> messageInDBS) throws JsonProcessingException {
+        ObjectWriter objectWriter = new ObjectMapper().writer().withDefaultPrettyPrinter();
+        return objectWriter.writeValueAsString(messageInDBS);
     }
 
     public static TGUser jsonToTGUser(String json) throws JsonProcessingException {

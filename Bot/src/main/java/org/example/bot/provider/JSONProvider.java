@@ -1,7 +1,7 @@
 package org.example.bot.provider;
 
-import org.telegram.telegrambots.meta.api.objects.Update;
+import org.example.bot.entity.JSONMessageInDB;
 
 public interface JSONProvider {
-    void create(Update update);
+    void create(JSONMessageInDB jsonMessageInDB);
 }

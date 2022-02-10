@@ -3,10 +3,12 @@ package org.example.bot.api.service.impl;
 import org.example.bot.api.exception.BadRequestException;
 import org.example.bot.api.exception.EnoughRightException;
 import org.example.bot.api.exception.ServerErrorException;
+import org.example.bot.api.model.telegram.MessageInDB;
 import org.example.bot.api.model.telegram.TGChat;
 import org.example.bot.api.model.telegram.TGUser;
 import org.example.bot.api.repository.BotApiRepository;
 import org.example.bot.api.service.BotApiService;
+import org.example.bot.api.util.JSONConverter;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.core.io.InputStreamResource;
@@ -15,11 +17,13 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.util.List;
 import java.util.UUID;
 
 @Service
 public class TelegramBotApiService implements BotApiService {
     private static final String QUEUE_GET_HISTORY_TO_PDF = "GetHistoryQueue";
+    private static final String QUEUE_FULLTEXT_SEARCH = "GetSearch";
     private final RabbitTemplate rabbitTemplate;
     private final Binding binding;
     private final BotApiRepository botApiRepository;
@@ -89,6 +93,18 @@ public class TelegramBotApiService implements BotApiService {
         } catch (Exception e) {
             return "something wrong";
         }
+    }
+
+    @Override
+    public List<MessageInDB> searchByText(String token, String text, int page) {
+        String username = botApiRepository.getUser(botApiRepository.getUserId(token)).getUserName();
+        if (page < 1) {
+            throw new BadRequestException("page cannot be < 1");
+        }
+        String message = username + " _ " + text + " _ " + page;
+        byte[] bytes = (byte[]) rabbitTemplate.convertSendAndReceive(QUEUE_FULLTEXT_SEARCH, message);
+        System.out.println(new String(bytes));
+        return JSONConverter.JSONToMessageInDBList(new String(bytes));
     }
 
     private void checkId(String id) {

@@ -8,12 +8,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.example.bot.bot.Bot;
 import org.example.bot.config.RabbitMQConfig;
+import org.example.bot.entity.MessageInDB;
 import org.example.bot.util.JSONConverter;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 public class RabbitProvider {
@@ -22,6 +24,7 @@ public class RabbitProvider {
     private static final String QUEUE_BOT_MESSAGE_NAME = "BotMessageQueue";
     private static final String QUEUE_FORM_HISTORY_TO_PDF = "FormHistoryQueue";
     private static final String QUEUE_GET_HISTORY_TO_PDF = "GetHistoryQueue";
+    private static final String QUEUE_FULLTEXT_SEARCH = "GetSearch";
     private static Connection connection;
     private static Channel channel;
     private final Bot bot;
@@ -33,6 +36,7 @@ public class RabbitProvider {
         receiveMessage(QUEUE_FORM_HISTORY_TO_PDF);
         receiveMessage(QUEUE_BOT_MESSAGE_NAME);
         receiveMessage(QUEUE_GET_HISTORY_TO_PDF);
+        receiveMessage(QUEUE_FULLTEXT_SEARCH);
     }
 
     public void sendMessage(String message, String queueName) throws IOException {
@@ -73,7 +77,19 @@ public class RabbitProvider {
                     } else {
                         channel.basicPublish("", delivery.getProperties().getReplyTo(), replyProps, "File not ready".getBytes());
                     }
+                    log.debug("[x] Sent json");
                     break;
+                case QUEUE_FULLTEXT_SEARCH:
+                    String[] params = message.split(" _ ");
+                    AMQP.BasicProperties reply = new AMQP.BasicProperties
+                            .Builder()
+                            .correlationId(delivery.getProperties().getCorrelationId())
+                            .build();
+                    List<MessageInDB> messageInDBList = bot.searchByText(params[0], params[1], Integer.parseInt(params[2]));
+                    channel.basicPublish("", delivery.getProperties().getReplyTo(), reply, JSONConverter.MessageInDBListInString(messageInDBList).getBytes());
+                    log.debug("[x] Sent json");
+                    break;
+
             }
         };
         channel.basicConsume(queueName, true, deliverCallback, consumerTag -> {
